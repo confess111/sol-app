@@ -10,13 +10,13 @@
 <link rel="apple-touch-icon" href="icon.png">
 <meta property="og:image" content="https://confess111.github.io/sol-app/icon.png">
 <style>
-:root{--bg1:#fbf1d9;--bg2:#f6d3c4;--ink:#5a1a1d;--sub:#9a6a5c;--glass:rgba(255,255,255,.34);--glass-b:rgba(255,255,255,.65);--r1:#c8323a;--r2:#e8a317;--empty:rgba(255,255,255,.42);--sheet:rgba(252,243,224,.92);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{--app-height:100dvh;--bg1:#fbf1d9;--bg2:#f6d3c4;--ink:#5a1a1d;--sub:#9a6a5c;--glass:rgba(255,255,255,.34);--glass-b:rgba(255,255,255,.65);--r1:#c8323a;--r2:#e8a317;--empty:rgba(255,255,255,.42);--sheet:rgba(252,243,224,.92);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a0f12;--bg2:#3d1519;--ink:#fbe9c9;--sub:#d1a88f;--glass:rgba(255,255,255,.08);--glass-b:rgba(255,255,255,.18);--empty:rgba(255,255,255,.06);--sheet:rgba(52,18,22,.94)}}
 :root[data-theme="dark"]{--bg1:#2a0f12;--bg2:#3d1519;--ink:#fbe9c9;--sub:#d1a88f;--glass:rgba(255,255,255,.08);--glass-b:rgba(255,255,255,.18);--empty:rgba(255,255,255,.06);--sheet:rgba(52,18,22,.94)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background-color:var(--bg2);background-image:linear-gradient(160deg,var(--bg1),var(--bg2));background-repeat:no-repeat;background-size:100% 100%;min-height:100%;-webkit-text-size-adjust:100%;touch-action:manipulation;scroll-padding-top:env(safe-area-inset-top,0px)}
+html{background-color:var(--bg2);background-image:linear-gradient(160deg,var(--bg1),var(--bg2));background-repeat:no-repeat;background-size:100% 100%;min-height:var(--app-height,100dvh);-webkit-text-size-adjust:100%;touch-action:manipulation;scroll-padding-top:env(safe-area-inset-top,0px)}
 body::before{content:"";position:fixed;left:0;right:0;top:calc(0px - env(safe-area-inset-top,0px));bottom:calc(0px - env(safe-area-inset-bottom,0px));background:linear-gradient(160deg,var(--bg1),var(--bg2));z-index:-1}
-body{margin:0;color:var(--ink);font-family:-apple-system,"Helvetica Neue",sans-serif;display:flex;justify-content:center;-webkit-user-select:none;user-select:none}
+body{margin:0;color:var(--ink);font-family:-apple-system,"Helvetica Neue",sans-serif;display:flex;justify-content:center;min-height:var(--app-height,100dvh);-webkit-user-select:none;user-select:none}
 #app{width:100%;max-width:560px;padding:22px 18px 120px}
 #in{transform-origin:top center}
 h1{margin:6px 0 2px;font-size:30px;letter-spacing:.5px}
@@ -103,8 +103,8 @@ function renderMain(){
   $('app').innerHTML='<div id="in">'+(tab==='home'?home():tab==='journal'?journal():settings())+'</div>'+sheet();fit();
   $('bar').innerHTML=[['home','Home'],['journal','Journal'],['settings','Settings']].map(function(x){return '<button class="'+(tab===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')}
 function fail(){$('app').innerHTML='<div class="card glass"><b>Something went wrong.</b><p class="sub">Your records are safe. Tap Copy and keep the text in Notes, then tap Upgrade.</p><textarea id="bk" rows="4"></textarea><div class="row" style="margin-top:12px"><div class="pill glass"><button data-a="bcopy">Copy</button><button class="on" data-a="upg">Upgrade</button></div></div><div class="hint" id="bm"></div></div>'}
-function fit(){}
-addEventListener('resize',fit);
+function fit(){try{document.documentElement.style.setProperty('--app-height',window.innerHeight+'px')}catch(e){}}
+addEventListener('resize',fit);addEventListener('orientationchange',fit);fit();
 function openDay(k){cur=k;sel=((S.days[k]&&S.days[k].t)||[]).slice();draft=null}
 document.addEventListener('click',function(e){
   var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,v=b.dataset.v;
