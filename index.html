@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Sol</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E☀️%3C/text%3E%3C/svg%3E">
+<style>
+:root{--bg1:#fbf1d9;--bg2:#f6d3c4;--ink:#5a1a1d;--sub:#9a6a5c;--glass:rgba(255,255,255,.34);--glass-b:rgba(255,255,255,.65);--r1:#c8323a;--r2:#e8a317;--empty:rgba(255,255,255,.42);--sheet:rgba(252,243,224,.92);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a0f12;--bg2:#3d1519;--ink:#fbe9c9;--sub:#d1a88f;--glass:rgba(255,255,255,.08);--glass-b:rgba(255,255,255,.18);--empty:rgba(255,255,255,.06);--sheet:rgba(52,18,22,.94)}}
+:root[data-theme="dark"]{--bg1:#2a0f12;--bg2:#3d1519;--ink:#fbe9c9;--sub:#d1a88f;--glass:rgba(255,255,255,.08);--glass-b:rgba(255,255,255,.18);--empty:rgba(255,255,255,.06);--sheet:rgba(52,18,22,.94)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background-color:var(--bg2);min-height:100%;-webkit-text-size-adjust:100%;touch-action:manipulation;scroll-padding-top:env(safe-area-inset-top,0px)}
+body::before{content:"";position:fixed;left:0;right:0;top:0;bottom:0;background:linear-gradient(160deg,var(--bg1),var(--bg2));z-index:-1}
+body{margin:0;color:var(--ink);font-family:-apple-system,"Helvetica Neue",sans-serif;display:flex;justify-content:center;-webkit-user-select:none;user-select:none}
+#app{width:100%;max-width:560px;padding:22px 18px 120px}
+#in{transform-origin:top center}
+h1{margin:6px 0 2px;font-size:30px;letter-spacing:.5px}
+.sub,.date{color:var(--sub);font-size:13px}
+.glass{background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.card{border-radius:22px;padding:16px;margin:14px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px;text-align:center}
+.stats b{display:block;font-size:26px}.stats span{font-size:12px;color:var(--sub)}
+button{font-family:inherit;color:var(--ink);cursor:pointer}
+.main{width:100%;margin-top:14px;padding:16px;border-radius:18px;font-size:17px;font-weight:600}
+.on{background:linear-gradient(135deg,rgba(200,50,58,.7),rgba(232,163,23,.65))!important;color:#fff!important;border-color:transparent!important}
+.btn,.chip{border-radius:14px;padding:9px 14px;font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sq{width:36px;height:36px;border-radius:12px;font-size:18px}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd{text-align:center;font-size:11px;color:var(--sub)}
+.d{aspect-ratio:1;border-radius:12px;border:1px solid transparent;background:var(--empty);display:flex;align-items:center;justify-content:center;font-size:14px;position:relative;padding:0}
+.d.has{background:linear-gradient(135deg,rgba(200,50,58,.6),rgba(232,163,23,.55));color:#fff;font-weight:600}
+.d.today{border-color:var(--r2)}.d.x{background:none;pointer-events:none}
+.d i{position:absolute;bottom:5px;width:4px;height:4px;border-radius:50%;background:#fff}
+.hint{font-size:12px;color:var(--sub);text-align:center;margin-top:10px}
+.word{font-size:24px;font-weight:700;margin-top:4px}
+.entry{display:block;width:100%;text-align:left;border-radius:18px;padding:14px;margin:10px 0}
+.entry p{margin:6px 0 0;font-size:14px;color:var(--sub);white-space:pre-wrap}
+.tg{font-size:12px;color:var(--r2);margin-top:4px}
+textarea{width:100%;border-radius:14px;border:1px solid var(--glass-b);background:var(--empty);color:var(--ink);padding:10px;font-size:16px;font-family:inherit;resize:none;-webkit-user-select:text;user-select:text}
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;padding:0 18px calc(10px + env(safe-area-inset-bottom,0px));pointer-events:none}
+.bar{pointer-events:auto;display:flex;gap:6px;padding:6px;border-radius:22px;width:100%;max-width:420px}
+.bar button{flex:1;padding:11px 0;border:0;border-radius:16px;background:none;color:var(--sub);font-size:14px}
+.pill{display:flex;gap:6px;padding:5px;border-radius:20px}.pill button{border:0;background:none;color:var(--sub);border-radius:15px;padding:9px 14px;font-size:14px}
+.veil{position:fixed;inset:0;background:rgba(40,10,12,.35);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.panel{width:100%;max-width:560px;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));border-radius:24px 24px 0 0;background:var(--sheet);border:1px solid var(--glass-b);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
+</style></head>
+<body><div id="app"></div>
+<div class="tabs"><div class="bar glass" id="bar"></div></div>
+<script>
+var VER='1.5',K='sol-v1',S={days:{},theme:'auto'};
+function loadFrom(r){var o=JSON.parse(r);if(!o||typeof o.days!=='object'||!o.days)throw 0;S=Object.assign(S,o)}
+try{var r=localStorage.getItem(K);if(r){try{loadFrom(r)}catch(e){localStorage.setItem(K+'-bad',r);var ok=0;try{loadFrom(localStorage.getItem(K+'-prev'));ok=1}catch(e2){}if(!ok)try{var sn0=JSON.parse(localStorage.getItem(K+'-snap')||'{}'),sk0=Object.keys(sn0).sort();loadFrom(sn0[sk0[sk0.length-1]])}catch(e3){}}}}catch(e){}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+function snap(j){try{var s=JSON.parse(localStorage.getItem(K+'-snap')||'{}');s[tk]=j;var ks=Object.keys(s).sort();while(ks.length>7)delete s[ks.shift()];localStorage.setItem(K+'-snap',JSON.stringify(s))}catch(e){}}
+function save(){try{var j=JSON.stringify(S),p=localStorage.getItem(K);if(p&&p!==j)localStorage.setItem(K+'-prev',p);localStorage.setItem(K,j);snap(j)}catch(e){}}
+var pad=function(n){return String(n).padStart(2,'0')},key=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())},$=function(i){return document.getElementById(i)},fmt=function(k){return k.replace(/-/g,'.')},esc=function(s){return s.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})};
+var now=new Date(),tk=key(now),view=new Date(now.getFullYear(),now.getMonth(),1),tab='home',cur=null,sel=[],draft=null;
+var Q1=['Poco a poco. Little by little.','Hoy es un buen día. Today is a good day.','Un rato basta. A little while is enough.','Empieza ya. Start now.','Sin prisa, sin pausa. No rush, no stopping.','Tú puedes. You can do it.','Una palabra es un comienzo. One word is a start.','Vamos. Let’s go.'];
+var Q2=['¡Muy bien! Very good!','¡Olé! Nice one.','Otro día más. One more day.','Eso es. That is it.','Bien hecho. Well done.','Mañana más. More tomorrow.','¡Genial! Great!','Sigue así. Keep it up.'];
+var MS={10:'Diez. A real habit now.',25:'Veinticinco. Your ear is waking up.',50:'Cincuenta. ¡Increíble!',100:'Cien. ¡Qué orgullo!',150:'Ciento cincuenta. This is you now.',200:'Doscientos. ¡Imparable!'};
+var W=[['la manzana','apple'],['el agua','water'],['gracias','thank you'],['por favor','please'],['la casa','house'],['el amigo','friend'],['comer','to eat'],['beber','to drink'],['hablar','to speak'],['aprender','to learn'],['la ciudad','city'],['feliz','happy'],['cansado','tired'],['mañana','tomorrow / morning'],['siempre','always'],['nunca','never'],['la playa','beach'],['el libro','book'],['la noche','night'],['el sol','sun'],['querer','to want / to love'],['la vida','life'],['bonito','pretty'],['despacio','slowly'],['la música','music'],['el café','coffee'],['dormir','to sleep'],['correr','to run'],['la sandía','watermelon'],['tímido','shy']];
+var TG=['Words','Listening','Speaking','Grammar','Reading','Duolingo'];
+var pick=function(a,o){return a[(Math.floor(now/864e5)+o)%a.length]};
+function applyTheme(){var r=document.documentElement;if(S.theme==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.theme)}
+function cal(){
+  var h='<div class="card glass"><div class="mh"><button class="sq glass" data-a="prev">‹</button><b>'+view.toLocaleDateString('en-US',{month:'long',year:'numeric'})+'</b><button class="sq glass" data-a="next">›</button></div><div class="grid">';
+  h+=['L','M','X','J','V','S','D'].map(function(x){return '<div class="wd">'+x+'</div>'}).join('');
+  var first=(view.getDay()+6)%7,dim=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+  for(var i=0;i<first;i++)h+='<div class="d x"></div>';
+  for(var n=1;n<=dim;n++){var k=view.getFullYear()+'-'+pad(view.getMonth()+1)+'-'+pad(n),v=S.days[k];
+    h+='<button class="d'+(v?' has':'')+(k===tk?' today':'')+'" data-a="day" data-k="'+k+'">'+n+(v&&v.n?'<i></i>':'')+'</button>'}
+  var old=Object.keys(S.days).length>=5&&(!S.lastBackup||Date.now()-S.lastBackup>12096e5);
+  return h+'</div><div class="hint">Tap a day to add a note or log a past day</div></div>'+(old?'<div class="hint">Tip: tap Copy in Settings to keep a backup in Notes or Files.</div>':'')}
+function home(){
+  var t=Object.keys(S.days),mo=t.filter(function(k){return k.indexOf(tk.slice(0,7))===0}).length,has=!!S.days[tk],hr=now.getHours(),
+  g=hr<12?['Buenos días','Good morning']:hr<20?['Buenas tardes','Good afternoon']:['Buenas noches','Good evening'],w=pick(W,0);
+  return '<h1>Sol</h1><div class="date">'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</div>'+
+  '<div class="card glass"><div class="row"><b>'+g[0]+'</b><span class="sub">'+g[1]+'</span></div><p class="sub" style="margin:8px 0 0">'+(has?pick(Q2,3):pick(Q1,0))+'</p>'+(has&&MS[t.length]?'<p style="margin:8px 0 0"><b>'+MS[t.length]+'</b></p>':'')+
+  '<div class="stats"><div><b>'+t.length+'</b><span>Total</span></div><div><b>'+mo+'</b><span>This month</span></div></div><button class="main glass'+(has?' on':'')+'" data-a="main">'+(has?'Done today ✓':'I studied today')+'</button></div>'+
+  '<div class="card glass"><span class="sub">Word of the day</span><div class="word">'+w[0]+'</div><div class="sub">'+w[1]+'</div></div>'+cal()}
+function journal(){
+  var ks=Object.keys(S.days).filter(function(k){return S.days[k].n}).sort().reverse(),h='<h1>Journal</h1><div class="date">'+ks.length+' note'+(ks.length===1?'':'s')+'</div>';
+  if(!ks.length)return h+'<div class="card glass sub">Nothing here yet. One word or one sentence is plenty.</div>';
+  return h+ks.map(function(k){var v=S.days[k];return '<button class="entry glass" data-a="day" data-k="'+k+'"><b>'+fmt(k)+'</b>'+(v.t&&v.t.length?'<div class="tg">'+v.t.join(' · ')+'</div>':'')+'<p>'+esc(v.n)+'</p></button>'}).join('')}
+function settings(){
+  return '<h1>Settings</h1><div class="date">Version '+VER+'</div>'+
+  '<div class="card glass"><div class="row"><span>Appearance<br><span class="sub" style="font-size:12px">Auto follows your device</span></span><div class="pill glass">'+['auto','light','dark'].map(function(x){return '<button class="'+(S.theme===x?'on':'')+'" data-a="th" data-v="'+x+'">'+x[0].toUpperCase()+x.slice(1)+'</button>'}).join('')+'</div></div></div>'+
+  '<div class="card glass"><div class="row"><span>Backup</span><div class="pill glass"><button data-a="bcopy">Copy</button><button data-a="brest">Restore</button></div></div><textarea id="bk" rows="3" style="margin-top:12px" placeholder="Copy shows your data here. Paste data here, then Restore."></textarea><div class="hint" id="bm">Last backup: '+(S.lastBackup?fmt(key(new Date(S.lastBackup))):'never')+'</div></div>'+
+  '<div class="card glass"><div class="row"><span>Get the latest version<br><span class="sub" style="font-size:12px">Your records stay on this device.</span></span><div class="pill glass"><button class="on" data-a="upg">Upgrade</button></div></div></div><div class="hint" style="margin-top:22px">Hecho con calma. Kept on this device.</div>'}
+function sheet(){
+  if(!cur)return '';var v=S.days[cur],t=draft!==null?draft:(v&&v.n)||'';
+  return '<div class="veil" data-a="close"><div class="panel" data-a="stay"><div class="row"><b>'+fmt(cur)+'</b><button class="btn glass" data-a="close">Close</button></div><div class="chips">'+TG.map(function(x){return '<button class="chip glass'+(sel.indexOf(x)>-1?' on':'')+'" data-a="tag" data-v="'+x+'">'+x+'</button>'}).join('')+'</div><textarea id="nt" rows="3" placeholder="A word or a sentence from today">'+esc(t)+'</textarea><div class="row" style="margin-top:12px"><button class="btn glass" data-a="del">'+(v?'Remove day':'Cancel')+'</button><button class="btn glass on" data-a="save">Save</button></div></div></div>'}
+function render(){try{renderMain()}catch(e){fail()}}
+function renderMain(){
+  $('app').innerHTML='<div id="in">'+(tab==='home'?home():tab==='journal'?journal():settings())+'</div>'+sheet();fit();
+  $('bar').innerHTML=[['home','Home'],['journal','Journal'],['settings','Settings']].map(function(x){return '<button class="'+(tab===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')}
+function fail(){$('app').innerHTML='<div class="card glass"><b>Something went wrong.</b><p class="sub">Your records are safe. Tap Copy and keep the text in Notes, then tap Upgrade.</p><textarea id="bk" rows="4"></textarea><div class="row" style="margin-top:12px"><div class="pill glass"><button data-a="bcopy">Copy</button><button class="on" data-a="upg">Upgrade</button></div></div><div class="hint" id="bm"></div></div>'}
+function fit(){}
+addEventListener('resize',fit);
+function openDay(k){cur=k;sel=((S.days[k]&&S.days[k].t)||[]).slice();draft=null}
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-a]');if(!b)return;var a=b.dataset.a,v=b.dataset.v;
+  switch(a){
+    case 'stay':return;
+    case 'tab':tab=v;cur=null;window.scrollTo(0,0);break;
+    case 'prev':view=new Date(view.getFullYear(),view.getMonth()-1,1);break;
+    case 'next':view=new Date(view.getFullYear(),view.getMonth()+1,1);break;
+    case 'main':if(!S.days[tk]){S.days[tk]={n:'',t:[]};save()}else openDay(tk);break;
+    case 'day':openDay(b.dataset.k);break;
+    case 'close':cur=null;break;
+    case 'tag':draft=$('nt').value;var i=sel.indexOf(v);if(i>-1)sel.splice(i,1);else sel.push(v);break;
+    case 'save':S.days[cur]={n:$('nt').value.trim(),t:sel.slice()};save();cur=null;break;
+    case 'del':if(S.days[cur]){delete S.days[cur];save()}cur=null;break;
+    case 'th':S.theme=v;applyTheme();save();break;
+    case 'bcopy':var j=JSON.stringify({days:S.days}),bk=$('bk');bk.value=j;bk.select();try{navigator.clipboard&&navigator.clipboard.writeText(j)}catch(x){}S.lastBackup=Date.now();save();$('bm').textContent='Copied. Paste it into Notes to keep it.';return;
+    case 'brest':try{var o=JSON.parse($('bk').value);if(!o||!o.days)throw 0;if(!confirm('Replace current records with this backup?'))return;S.days=o.days;save();render();$('bm').textContent='Restored.'}catch(x){$('bm').textContent='That does not look like a backup.'}return;
+    case 'upg':b.textContent='Updating…';var go=function(){location.reload()};try{if(window.caches)caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).then(go,go);else go()}catch(x){go()}return;
+  }
+  render()});
+['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()})});
+applyTheme();render();
+</script></body></html>
