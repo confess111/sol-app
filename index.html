@@ -66,14 +66,17 @@ textarea{width:100%;border-radius:14px;border:1px solid var(--glass-b);backgroun
   </div>
 </div>
 <script>
-var VER='1.6',K='sol-v1',S={days:{},theme:'auto'};
+var VER='1.7',K='sol-v1',S={days:{},theme:'auto'};
+/* 固定按北京时间（UTC+8）计算，不受设备时区影响 */
+function bjShift(d){return new Date(d.getTime()+d.getTimezoneOffset()*60000+28800000);}
+function bjNow(){return bjShift(new Date());}
 function loadFrom(r){var o=JSON.parse(r);if(!o||typeof o.days!=='object'||!o.days)throw 0;S=Object.assign(S,o)}
 try{var r=localStorage.getItem(K);if(r){try{loadFrom(r)}catch(e){localStorage.setItem(K+'-bad',r);var ok=0;try{loadFrom(localStorage.getItem(K+'-prev'));ok=1}catch(e2){}if(!ok)try{var sn0=JSON.parse(localStorage.getItem(K+'-snap')||'{}'),sk0=Object.keys(sn0).sort();loadFrom(sn0[sk0[sk0.length-1]])}catch(e3){}}}}catch(e){}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 function snap(j){try{var s=JSON.parse(localStorage.getItem(K+'-snap')||'{}');s[tk]=j;var ks=Object.keys(s).sort();while(ks.length>7)delete s[ks.shift()];localStorage.setItem(K+'-snap',JSON.stringify(s))}catch(e){}}
 function save(){try{var j=JSON.stringify(S),p=localStorage.getItem(K);if(p&&p!==j)localStorage.setItem(K+'-prev',p);localStorage.setItem(K,j);snap(j)}catch(e){}}
 var pad=function(n){return String(n).padStart(2,'0')},key=function(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())},$=function(i){return document.getElementById(i)},fmt=function(k){return k.replace(/-/g,'.')},esc=function(s){return s.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]})};
-var now=new Date(),tk=key(now),view=new Date(now.getFullYear(),now.getMonth(),1),tab='home',cur=null,sel=[],draft=null;
+var now=bjNow(),tk=key(now),view=new Date(now.getFullYear(),now.getMonth(),1),tab='home',cur=null,sel=[],draft=null;
 var Q1=['Poco a poco. Little by little.','Hoy es un buen día. Today is a good day.','Un rato basta. A little while is enough.','Empieza ya. Start now.','Sin prisa, sin pausa. No rush, no stopping.','Tú puedes. You can do it.','Una palabra es un comienzo. One word is a start.','Vamos. Let’s go.'];
 var Q2=['¡Muy bien! Very good!','¡Olé! Nice one.','Otro día más. One more day.','Eso es. That is it.','Bien hecho. Well done.','Mañana más. More tomorrow.','¡Genial! Great!','Sigue así. Keep it up.'];
 var MS={10:'Diez. A real habit now.',25:'Veinticinco. Your ear is waking up.',50:'Cincuenta. ¡Increíble!',100:'Cien. ¡Qué orgullo!',150:'Ciento cincuenta. This is you now.',200:'Doscientos. ¡Imparable!'};
@@ -104,7 +107,7 @@ function journal(){
 function settings(){
   return '<h1>Settings</h1><div class="date">Version '+VER+'</div>'+
   '<div class="card glass"><div class="row"><span>Appearance<br><span class="sub" style="font-size:12px">Auto follows your device</span></span><div class="pill glass">'+['auto','light','dark'].map(function(x){return '<button class="'+(S.theme===x?'on':'')+'" data-a="th" data-v="'+x+'">'+x[0].toUpperCase()+x.slice(1)+'</button>'}).join('')+'</div></div></div>'+
-  '<div class="card glass"><div class="row"><span>Backup</span><div class="pill glass"><button data-a="bdown">⤓ 导出</button><button data-a="brest">↺ 导入</button></div></div><div class="hint" id="bm">Last backup: '+(S.lastBackup?fmt(key(new Date(S.lastBackup))):'never')+'</div></div>'+
+  '<div class="card glass"><div class="row"><span>Backup</span><div class="pill glass"><button data-a="bdown">⤓ 导出</button><button data-a="brest">↺ 导入</button></div></div><div class="hint" id="bm">Last backup: '+(S.lastBackup?fmt(key(bjShift(new Date(S.lastBackup)))):'never')+'</div></div>'+
   '<div class="card glass"><div class="row"><span>Get the latest version<br><span class="sub" style="font-size:12px">Your records stay on this device.</span></span><div class="pill glass"><button class="on" data-a="upg">Upgrade</button></div></div></div><div class="hint" style="margin-top:22px">Hecho con calma. Kept on this device.</div>'}
 function sheet(){
   if(!cur)return '';var v=S.days[cur],t=draft!==null?draft:(v&&v.n)||'';
@@ -142,7 +145,7 @@ var TEMP_KEY='__bb_restore_tmp__';
 function bbAll(){var m={},i,k;for(i=0;i<localStorage.length;i++){k=localStorage.key(i);if(k!==TEMP_KEY)m[k]=localStorage.getItem(k);}return m;}
 function bbSetMsg(t){var e=document.getElementById('bm');if(e)e.textContent=t;}
 function bbSnap(){var s={},i,k;for(i=0;i<localStorage.length;i++){k=localStorage.key(i);if(k!==TEMP_KEY)s[k]=localStorage.getItem(k);}try{localStorage.setItem(TEMP_KEY,JSON.stringify(s));}catch(e){}}
-function backupName(){var d=new Date();return 'Sol备份_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.json';}
+function backupName(){var d=bjNow();return 'Sol备份_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.json';}
 function fmtSize(n){if(n>=1048576)return (n/1048576).toFixed(2)+' MB';return (n/1024).toFixed(1)+' KB';}
 function exportBackup(){
   try{
