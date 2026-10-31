@@ -54,8 +54,19 @@ textarea{width:100%;border-radius:14px;border:1px solid var(--glass-b);backgroun
 </style></head>
 <body><div id="app"></div>
 <div class="tabs"><div class="bar glass" id="bar"></div></div>
+<div id="im" style="position:fixed;inset:0;background:rgba(40,10,12,.4);display:none;align-items:center;justify-content:center;z-index:10">
+  <div class="panel glass" style="width:100%;max-width:420px;border-radius:24px">
+    <div class="row"><b>导入备份</b><button class="btn glass" id="imclose">关闭</button></div>
+    <input type="file" id="imfile" style="display:none">
+    <button class="btn glass" id="impick" style="width:100%;margin-top:12px">📁 选择文件</button>
+    <button class="btn glass on" id="imstart" style="width:100%;margin-top:10px;display:none">开始导入</button>
+    <div class="hint" id="imhint" style="text-align:left;margin-top:12px"></div>
+    <div class="hint" id="imstep" style="text-align:left;margin-top:6px"></div>
+    <button class="btn glass on" id="imdone" style="width:100%;margin-top:12px;display:none">完成</button>
+  </div>
+</div>
 <script>
-var VER='1.5',K='sol-v1',S={days:{},theme:'auto'};
+var VER='1.6',K='sol-v1',S={days:{},theme:'auto'};
 function loadFrom(r){var o=JSON.parse(r);if(!o||typeof o.days!=='object'||!o.days)throw 0;S=Object.assign(S,o)}
 try{var r=localStorage.getItem(K);if(r){try{loadFrom(r)}catch(e){localStorage.setItem(K+'-bad',r);var ok=0;try{loadFrom(localStorage.getItem(K+'-prev'));ok=1}catch(e2){}if(!ok)try{var sn0=JSON.parse(localStorage.getItem(K+'-snap')||'{}'),sk0=Object.keys(sn0).sort();loadFrom(sn0[sk0[sk0.length-1]])}catch(e3){}}}}catch(e){}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
@@ -93,7 +104,7 @@ function journal(){
 function settings(){
   return '<h1>Settings</h1><div class="date">Version '+VER+'</div>'+
   '<div class="card glass"><div class="row"><span>Appearance<br><span class="sub" style="font-size:12px">Auto follows your device</span></span><div class="pill glass">'+['auto','light','dark'].map(function(x){return '<button class="'+(S.theme===x?'on':'')+'" data-a="th" data-v="'+x+'">'+x[0].toUpperCase()+x.slice(1)+'</button>'}).join('')+'</div></div></div>'+
-  '<div class="card glass"><div class="row"><span>Backup</span><div class="pill glass"><button data-a="bcopy">Copy</button><button data-a="brest">Restore</button><button data-a="bdown">Download .json</button></div></div><textarea id="bk" rows="3" style="margin-top:12px" placeholder="Copy shows your data here. Paste data here, then Restore."></textarea><div class="hint" id="bm">Last backup: '+(S.lastBackup?fmt(key(new Date(S.lastBackup))):'never')+'</div></div>'+
+  '<div class="card glass"><div class="row"><span>Backup</span><div class="pill glass"><button data-a="bdown">⤓ 导出</button><button data-a="brest">↺ 导入</button></div></div><div class="hint" id="bm">Last backup: '+(S.lastBackup?fmt(key(new Date(S.lastBackup))):'never')+'</div></div>'+
   '<div class="card glass"><div class="row"><span>Get the latest version<br><span class="sub" style="font-size:12px">Your records stay on this device.</span></span><div class="pill glass"><button class="on" data-a="upg">Upgrade</button></div></div></div><div class="hint" style="margin-top:22px">Hecho con calma. Kept on this device.</div>'}
 function sheet(){
   if(!cur)return '';var v=S.days[cur],t=draft!==null?draft:(v&&v.n)||'';
@@ -102,7 +113,7 @@ function render(){try{renderMain()}catch(e){fail()}}
 function renderMain(){
   $('app').innerHTML='<div id="in">'+(tab==='home'?home():tab==='journal'?journal():settings())+'</div>'+sheet();fit();
   $('bar').innerHTML=[['home','Home'],['journal','Journal'],['settings','Settings']].map(function(x){return '<button class="'+(tab===x[0]?'on':'')+'" data-a="tab" data-v="'+x[0]+'">'+x[1]+'</button>'}).join('')}
-function fail(){$('app').innerHTML='<div class="card glass"><b>Something went wrong.</b><p class="sub">Your records are safe. Tap Copy and keep the text in Notes, then tap Upgrade.</p><textarea id="bk" rows="4"></textarea><div class="row" style="margin-top:12px"><div class="pill glass"><button data-a="bcopy">Copy</button><button class="on" data-a="upg">Upgrade</button></div></div><div class="hint" id="bm"></div></div>'}
+function fail(){$('app').innerHTML='<div class="card glass"><b>Something went wrong.</b><p class="sub">Your records are safe. Tap Export to save a backup file, then tap Upgrade.</p><div class="row" style="margin-top:12px"><div class="pill glass"><button data-a="bdown">Export</button><button class="on" data-a="upg">Upgrade</button></div></div><div class="hint" id="bm"></div></div>'}
 function fit(){try{document.documentElement.style.setProperty('--app-height',window.innerHeight+'px')}catch(e){}}
 addEventListener('resize',fit);addEventListener('orientationchange',fit);fit();
 function openDay(k){cur=k;sel=((S.days[k]&&S.days[k].t)||[]).slice();draft=null}
@@ -120,28 +131,155 @@ document.addEventListener('click',function(e){
     case 'save':S.days[cur]={n:$('nt').value.trim(),t:sel.slice()};save();cur=null;break;
     case 'del':if(S.days[cur]){delete S.days[cur];save()}cur=null;break;
     case 'th':S.theme=v;applyTheme();save();break;
-    case 'bcopy':doBackup();return;
-    case 'brest':doRestore($('bk').value);return;
-    case 'bdown':doDownload('sol-backup.json');return;
+    case 'brest':openImport();return;
+    case 'bdown':exportBackup();return;
     case 'upg':b.textContent='Updating…';var go=function(){location.reload()};try{if(window.caches)caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k)}))}).then(go,go);else go()}catch(x){go()}return;
   }
   render()});
 ['gesturestart','gesturechange','gestureend'].forEach(function(t){document.addEventListener(t,function(e){e.preventDefault()})});
 /* backup/restore upgrade: gzip+base64 copy, json file download, manual-copy fallback, old-format compatible */
 var TEMP_KEY='__bb_restore_tmp__';
-function bbB64e(b){var s='',i;for(i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s);}
-function bbB64d(s){var x=atob(s),o=new Uint8Array(x.length),i;for(i=0;i<x.length;i++)o[i]=x.charCodeAt(i);return o;}
-function bbGzip(b){var c=new CompressionStream('gzip'),w=c.writable.getWriter();w.write(b);w.close();return new Response(c.readable).arrayBuffer().then(function(a){return new Uint8Array(a);});}
-function bbGunzip(b){var c=new DecompressionStream('gzip'),w=c.writable.getWriter();w.write(b);w.close();return new Response(c.readable).arrayBuffer().then(function(a){return new Uint8Array(a);});}
 function bbAll(){var m={},i,k;for(i=0;i<localStorage.length;i++){k=localStorage.key(i);if(k!==TEMP_KEY)m[k]=localStorage.getItem(k);}return m;}
 function bbSetMsg(t){var e=document.getElementById('bm');if(e)e.textContent=t;}
 function bbSnap(){var s={},i,k;for(i=0;i<localStorage.length;i++){k=localStorage.key(i);if(k!==TEMP_KEY)s[k]=localStorage.getItem(k);}try{localStorage.setItem(TEMP_KEY,JSON.stringify(s));}catch(e){}}
-function bbCopy(t){var ta=document.getElementById('bk');function fail(){if(ta){ta.focus();if(ta.select)ta.select();}bbSetMsg('剪贴板不可用，请长按上面的文本框手动复制。');}try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){bbSetMsg('已复制，可粘贴到备忘录或文件 App。');},function(){fail();});return;}}catch(e){}fail();}
-function doBackup(){try{if(typeof CompressionStream==='undefined')throw 0;var m=bbAll(),gz=bbGzip(new TextEncoder().encode(JSON.stringify(m)));gz.then(function(u){var w=bbB64e(u).replace(/(.{80})/g,'$1\n'),ta=document.getElementById('bk');if(ta){ta.value=w;if(ta.select)ta.select();}S.lastBackup=Date.now();save();bbCopy(w);}).catch(function(){bbSetMsg('压缩失败，请改用 Download .json 按钮。');});}catch(e){bbSetMsg('你的浏览器不支持压缩，请更新 iPad 系统，或用 Download .json 按钮。');}}
+function backupName(){var d=new Date();return 'Sol备份_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())+'.json';}
+function fmtSize(n){if(n>=1048576)return (n/1048576).toFixed(2)+' MB';return (n/1024).toFixed(1)+' KB';}
+function exportBackup(){
+  try{
+    var m=bbAll(),n=Object.keys(S.days).length;
+    var txt=JSON.stringify({format:'v2',exportedAt:new Date().toISOString(),counts:{days:n},data:m});
+    var file=new File([txt],backupName(),{type:'application/json'});
+    if(!(navigator.canShare&&navigator.canShare({files:[file]}))){doDownload(backupName());return;}
+    var kb=fmtSize(file.size);
+    navigator.share({files:[file],title:'Sol backup'}).then(function(){
+      S.lastBackup=Date.now();save();
+      bbSetMsg('共 '+n+' 条、'+kb+'。请在弹出的菜单选择【存储到文件】，之后在文件 App 核对大小是否为 '+kb);
+    }).catch(function(e){
+      if(e&&e.name==='AbortError'){bbSetMsg('已取消分享，未导出。');return;}
+      bbSetMsg('导出失败：'+((e&&e.message)||e));
+    });
+  }catch(e){bbSetMsg('导出失败：'+((e&&e.message)||e));}
+}
 function doDownload(fn){try{var m=bbAll(),blob=new Blob([JSON.stringify(m,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=fn||'backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(function(){URL.revokeObjectURL(url);},2000);bbSetMsg('已生成备份文件，可存到文件 App。');}catch(e){bbSetMsg('生成文件失败。');}}
-function doRestore(text){if(typeof DecompressionStream==='undefined'){bbSetMsg('你的浏览器不支持解压，请更新 iPad 系统。');return;}var clean=(text||'').replace(/\s+/g,'');if(!clean){bbSetMsg('请先粘贴备份内容。');return;}try{var bytes=bbB64d(clean);bbGunzip(bytes).then(function(u){var parsed;try{parsed=JSON.parse(new TextDecoder().decode(u));}catch(e){tryOld();return;}if(parsed&&typeof parsed==='object'&&!Array.isArray(parsed)){var ok=true,k;for(k in parsed){if(typeof parsed[k]!=='string'){ok=false;break;}}if(ok){finishRestore(parsed);return;}}tryOld();}).catch(function(){tryOld();});}catch(e){tryOld();}}
-function tryOld(){try{var old=JSON.parse(clean),map;if(old&&typeof old==='object'&&old.days&&typeof old.days==='object'){var d=(K==='sol-v1')?{days:{},theme:'auto'}:{days:{},goal:4,theme:'auto'};map={};map[K]=JSON.stringify(Object.assign(d,old));finishRestore(map);return;}}catch(e){}bbSetMsg('备份格式认不出来，没有改动任何数据。');}
-function finishRestore(m){try{bbSnap();}catch(e){}var k;for(k in m){if(k===TEMP_KEY)continue;try{localStorage.setItem(k,m[k]);}catch(e){}}reloadState();try{render();}catch(e){}bbSetMsg('恢复成功');}
+function imHint(t,c){var e=document.getElementById('imhint');if(e){e.textContent=t||'';e.style.color=c||'var(--sub)';}}
+function imStep(t){var e=document.getElementById('imstep');if(e)e.textContent=t||'';}
+var imFile=null;
+function openImport(){
+  imFile=null;
+  var fi=document.getElementById('imfile');if(fi)fi.value='';
+  var sb=document.getElementById('imstart');if(sb)sb.style.display='none';
+  var db=document.getElementById('imdone');if(db)db.style.display='none';
+  imStep('');
+  imHint('当前已有 '+Object.keys(S.days).length+' 条记录。选好备份文件后点「开始导入」。');
+  document.getElementById('im').style.display='flex';
+}
+function closeImport(){document.getElementById('im').style.display='none';}
+function parseBackup(raw){
+  var o=JSON.parse(raw);
+  if(!o||typeof o!=='object'||Array.isArray(o))return null;
+  if(o.format==='v2'&&o.data&&typeof o.data==='object')return {data:o.data,counts:o.counts||null};
+  var ks=Object.keys(o),i,allStr=true;
+  for(i=0;i<ks.length;i++){if(typeof o[ks[i]]!=='string'){allStr=false;break;}}
+  if(allStr&&ks.length)return {data:o,counts:null};
+  if(o.days&&typeof o.days==='object'){
+    var m={};m[K]=JSON.stringify({days:o.days,theme:o.theme||'auto'});
+    return {data:m,counts:null};
+  }
+  return null;
+}
+function incomingDays(data){
+  var raw=data[K];
+  if(typeof raw==='string'){try{var o=JSON.parse(raw);if(o&&o.days&&typeof o.days==='object')return o.days;}catch(e){}}
+  if(data.days&&typeof data.days==='object')return data.days;
+  return null;
+}
+function importWrite(data){
+  var k;
+  for(k in data){
+    if(k===TEMP_KEY)continue;
+    try{localStorage.setItem(k,data[k]);}
+    catch(e){
+      if(e&&(e.name==='QuotaExceededError'||e.name==='NS_ERROR_DOM_QUOTA_REACHED'||e.code===22))throw new Error('存储空间不足');
+      throw new Error('写入失败（'+k+'）：'+((e&&e.message)||e));
+    }
+  }
+}
+function tick(){return new Promise(function(r){setTimeout(r,0);});}
+function runImport(file){
+  var fail=function(t){imHint('导入失败：'+t,'#c62828');imStep('已有数据未改动，可以重新选择文件。');};
+  try{
+    imStep('读取中…');
+    return tick().then(function(){return file.text();}).then(function(raw){
+      if(!raw||!raw.trim()){fail('文件为空');return;}
+      imStep('解析中…');
+      return tick().then(function(){
+        var p=null;
+        try{p=parseBackup(raw);}catch(e){fail('不是有效的备份文件（JSON 解析失败）');return;}
+        if(!p){fail('备份格式无法识别');return;}
+        var inc=incomingDays(p.data);
+        if(!inc){fail('备份里没有有效记录');return;}
+        var warn='';
+        if(p.counts&&typeof p.counts.days==='number'&&p.counts.days!==Object.keys(inc).length){
+          warn='（警告：文件标注 '+p.counts.days+' 条，实际读到 '+Object.keys(inc).length+' 条）';
+        }
+        var cur=S.days,i,ov=[];
+        for(i in inc){if(cur&&(i in cur))ov.push(i);}
+        if(ov.length){
+          var ow=confirm('有 '+ov.length+' 天已存在，确定=覆盖这些天，取消=保留已有、跳过这些天');
+          if(!ow){
+            var merged={},k2;
+            for(k2 in cur)merged[k2]=cur[k2];
+            for(k2 in inc){if(!(k2 in cur))merged[k2]=inc[k2];}
+            var base=null;
+            try{base=JSON.parse(p.data[K]);}catch(e){base=null;}
+            if(!base||typeof base!=='object')base={days:{},theme:S.theme||'auto'};
+            base.days=merged;
+            var nd={},k3;for(k3 in p.data)nd[k3]=p.data[k3];
+            nd[K]=JSON.stringify(base);
+            p.data=nd;
+          }
+        }
+        var expect=Object.keys(incomingDays(p.data)).length;
+        imStep('写入中…');
+        return tick().then(function(){
+          try{bbSnap();}catch(e){}
+          try{importWrite(p.data);}
+          catch(e){
+            var m=(e&&e.message)||String(e);
+            if(m.indexOf('存储空间不足')>-1)fail('存储空间不足');else fail(m);
+            return;
+          }
+          imStep('校验中…');
+          return tick().then(function(){
+            reloadState();
+            var got=Object.keys(S.days).length;
+            if(got!==expect){fail('校验数量不一致（预期 '+expect+' 条，实际 '+got+' 条）');return;}
+            imHint('✅ 导入成功：'+got+' 条'+warn,'#2e7d32');
+            imStep('点「完成」刷新页面');
+            var sb=document.getElementById('imstart');if(sb)sb.style.display='none';
+            var db=document.getElementById('imdone');if(db)db.style.display='';
+          });
+        });
+      });
+    }).catch(function(e){fail((e&&e.message)||String(e));});
+  }catch(e){fail((e&&e.message)||String(e));return Promise.resolve();}
+}
+document.getElementById('impick').onclick=function(){document.getElementById('imfile').click();};
+document.getElementById('imfile').onchange=function(){
+  var f=this.files&&this.files[0];if(!f)return;
+  imFile=f;
+  var sb=document.getElementById('imstart');if(sb)sb.style.display='';
+  imHint('已选择：'+f.name+'（'+fmtSize(f.size)+'），点「开始导入」','#2e7d32');
+  imStep('');
+};
+document.getElementById('imstart').onclick=function(){
+  var b=this;
+  if(!imFile){imHint('先选择一个备份文件');return;}
+  b.disabled=true;
+  runImport(imFile).then(function(){b.disabled=false;});
+};
+document.getElementById('imclose').onclick=closeImport;
+document.getElementById('imdone').onclick=function(){location.reload();};
 function reloadState(){var d=(K==='sol-v1')?{days:{},theme:'auto'}:{days:{},goal:4,theme:'auto'};try{var r=localStorage.getItem(K);if(r){var o=JSON.parse(r);if(o&&o.days)S=Object.assign(d,o);}}catch(e){}if(S.days)Object.keys(S.days).forEach(function(k){var v=S.days[k];if(Array.isArray(v)||typeof v!=='object'||!v)S.days[k]={n:''};});}
 applyTheme();render();
 </script></body></html>
